@@ -1,0 +1,71 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class playercontroller : MonoBehaviour
+{
+    public Rigidbody2D rb;    //用来获取角色的刚体信息
+    public float speed;       //定义移动速度
+    public float jumpforce;   //定义跳跃的力
+    public Animator anim;     //获取动画的值
+    public LayerMask Ground;  //场景层
+    public Collider2D coll;   //碰撞体
+    // Start is called before the first frame update start会在开始的第一帧刷新一次
+    void Start()
+    {
+
+    }
+
+    // Update is called once per frame update会逐帧刷新
+    void FixedUpdate()
+    {
+        Movement();   //加载移动函数
+        SwitchAnim();
+    }
+
+    void Movement()
+    {
+        float horizontalmove = Input.GetAxis("Horizontal");   //获得移动事件。horizontal定义了左右和ad控制移动，左传递-1，右传递1
+        float facedirection = Input.GetAxisRaw("Horizontal");   //getaxisraw用来获取整数而不是小数，facedirection根据数值确定目前的角色面向
+        if (horizontalmove != 0)
+        {
+            rb.velocity = new Vector2(horizontalmove * speed * Time.deltaTime, rb.velocity.y);    //当角色触发移动事件，来根据移动事件的值改变角色x轴实现移动
+            anim.SetFloat("running", Mathf.Abs(facedirection));     //触发移动事件后根据当前移动速度确定是否改变移动动画
+        }
+
+        if (facedirection != 0)
+        {
+            transform.localScale = new Vector3(facedirection, 1, 1);    //当面向改变时改变角色的scale属性，-1获取镜像朝左
+        }
+
+        if (Input.GetButtonDown("Jump"))
+        {
+            rb.velocity = new Vector2(rb.velocity.x, jumpforce * Time.deltaTime);   //当空格按下时，根据jumpforce来改变y轴的力，上升时正，下降时负实现跳跃
+            anim.SetBool("jumping", true);
+        }
+    }
+
+    void SwitchAnim()
+    {
+        if(anim.GetBool("jumping"))     //如果处于jumping动画阶段，当y轴力为负数时改为下降阶段
+        {
+            if(rb.velocity.y < 0)
+            {
+                anim.SetBool("jumping", false);
+                anim.SetBool("falling", true);
+            }
+        }
+        else if(coll.IsTouchingLayers(Ground))      //如果collider触碰到Ground，改变为站立动画
+        {
+            anim.SetBool("falling", false);
+        }
+        /*根据判断是否处于下降状态来改变触地动画
+        if (anim.GetBool("falling")) 
+        {
+            if (rb.velocity.y == 0)
+                anim.SetBool("falling", false);
+        }
+        */
+    }
+
+}
